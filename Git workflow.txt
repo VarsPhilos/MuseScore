@@ -1,0 +1,282 @@
+Git workflow - 
+https://musescore.org/en/handbook/developers-handbook/finding-your-way-around/git-workflow
+
+Suggested workflow
+If you don't have an account on GitHub, create one for free first. Also make sure you set up git on your computer. It's recommended to use SSH to access your own git fork. This workflow is a command line workflow. If you prefer using a UI, GitHub also provides a UI tool for Mac and Windows that can automate some of the following operations.
+
+Summary
+Fork on GitHub (click Fork button)
+Clone to computer, use SSH URL ($ git clone git@github.com:you/MuseScore.git)
+Don't forget to cd into your repo: ($ cd MuseScore/)
+Set up remote upstream ($ git remote add upstream git://github.com/musescore/MuseScore.git)
+Create a branch for new issue ($ git checkout -b 404-new-feature)
+Develop on issue branch. [Time passes, the main MuseScore repository accumulates new commits]
+Commit changes to your local issue branch. ($ git add . ; git commit -m 'commit message')
+Fetch (download) upstream's master branch ($ git fetch upstream master)
+Update local master to match upstream's master ($ git checkout master; git merge upstream/master)
+Rebase issue branch ($ git checkout 404-new-feature; git rebase master)
+Repeat steps 6-11 until dev is complete
+Push branch to GitHub ($ git push origin 404-new-feature)
+Start your browser, go to your GitHub repo, switch to "404-new-feature" branch and press the [Pull Request] button
+After having made a Pull Request don't pull/merge anymore, it'll mess up the commit history. If you (have to) rebase, use 'push --force' ($ git push --force) to send it up to your GitHub repository, this will update the PR too. Be careful not to do this while the core team is working on merging in your PR. Note (to non-UNIX users): the "$ " of the commands mentioned throughout this page is (meant to be) the shell prompt and as such not to be typed in, your actual shell prompt may look different.
+
+Fork MuseScore repo to your own account
+This will create a copy of MuseScore repository to your own account. To fork, press the fork button in the top right corner on MuseScore GitHub page.
+
+Clone your GitHub fork to your computer
+Run a clone command against your GitHub fork. It will look something like this, except that it will use your GitHub account name, instead of "[you]":
+
+$ git clone git@github.com:[you]/MuseScore.git
+$ cd MuseScore 
+This command downloads your copy of MuseScore to a git repository on your development machine. Change directory into the new MuseScore directory. To build MuseScore, you will need to install dependencies, and run the build process. Check the instructions for your platform in the developer handbook. Note that the git clone command is using SSH in this case. You need to have SSH set up on your machine. A git:// URL would not work for your local fork, you will not be able to push on it. Alternatively you can use the HTTPS URL. If you already cloned MuseScore main repository with
+
+$ git clone git://github.com/musescore/MuseScore.git
+You can change the remote url of the origin to your fork with
+
+$ git remote set-url origin git@github.com:[you]/MuseScore.git
+Choose something to work on
+If you don't have a feature in mind, check out the issue tracker, or come ask in IRC (#musescore on freenode.net).
+
+Create a topical development branch
+Before you start working on a new feature or bug fix, create a new branch in your local repository that's dedicated to that change. Name it by issue number (if applicable) and description. For example, if you're working on issue #78359, a slur layout problem, create a new branch called 78359-slurlayout, like this:
+
+$ git checkout -b 78359-slurlayout
+Write some code!
+We are able to offer much help here :). If you can, provide some tests. See the mtest directory. When you have got something working, commit the changes to your branch on your local Git repo. Firstly add the files you want to commit, and then commit. Don't forget to put a meaningful message (see this page for tips). Use git status and git diff to see which files can be added and committed.
+
+$ git status
+$ git status [filename]
+$ git add [filename]
+$ git commit -m 'fix #78359: Some kind of descriptive message' 
+If your commit message starts with fix #xxxxx, with xxxx the issue number in the issue tracker, the issue will be marked as fixed automatically when your commit is pushed in the main repository.
+
+Keep your repo up to date with the main repo
+In order to get the latest updates from the main repository, do a one-time setup to establish it as a remote by entering:
+
+$ git remote add upstream git://github.com/musescore/MuseScore.git
+The main repo will be now known as upstream. Your fork is known as origin. The origin remote is automatically created after cloning your GitHub fork to your computer. To verify that you have two remotes, you can type:
+
+$ git remote
+Rebase your branch on the latest upstream
+To keep your development branch up to date, rebase your changes on top of the current state of the upstream master.
+
+# get the changes from upstream
+$ git fetch upstream master
+# switch to your local master branch
+$ git checkout master
+$ git rebase upstream/master
+# switch to your topical branch
+$ git checkout 78359-slurlayout
+# make sure all is committed as necessary in branch before rebasing
+$ git rebase master
+Rebase will put all your commits in the branch on hold, get the last changes, and apply your commits on top of it. You might need to resolve conflicts if you changed a file that has been changed in the main repo. To do so, edit the files, then:
+
+$ git add [filename]
+$ git rebase --continue 
+Another (and shorter) way to update your development branch is $ git pull --rebase upstream master. Should you have changes that are not yet commited to your branch, use $ git stash before the rebase and $ git stash pop after.
+
+Make a Pull Request to send your changes to MuseScore
+When you are ready to send your modified code to MuseScore, push your branch in your origin remote.
+
+$ git push origin 78359-slurlayout
+Then do a pull request to MuseScore on GitHub. Go to your GitHub page, select the branch on the left, and press the Pull Request button at the top. Choose your branch, add a comment and submit your pull request.
+
+
+
+If you are fixing an issue from the tracker, set the issue's status to "patch (code needs review)" with a link to your pull request on GitHub. One of the developers with push rights on the main repo will merge your request ASAP, or leave a comment to say why it hasn't been merged and what needed to be done to get it merged.
+
+Important: If you haven't signed the MuseScore CLA yet, do this first as it's a requirement for your pull request to be accepted.
+
+Editing your Pull Request
+You can continue to push new commits to the branch on GitHub until the pull request is merged. If you amend or squash existing commits, or edit history in any way, then you need to do a force push ($ git push --force) to get the changes to appear online, but be aware that the whole point of requiring a force push is to make it difficult to overwrite commits accidentally.
+
+Once the pull request is merged the code becomes part of the main repository and you will no longer be able to edit it (except by creating a new PR). Your changes will be available for other people to test in the next nightly build.
+
+Advice & tips
+Don't use git commit -a
+$ git commit -a
+This will perform git add for all unstaged files and commit (equivalent to "$ git add . ; git commit"). You probably don't want to do that. It's better to use git status and add files individually before committing.
+
+Don't use git fetch without specifying a branch
+$ git fetch upstream # this will fetch all upsteam branches
+$ git fetch upstream master # this will fetch only the master branch
+Most work of your work will be done on top of upstream's master branch, so fetching commits from other upstream branches is a waste of time, bandwidth, and disk space. On the rare occassion that you need to work on top of a different upstream branch, simply specify its name instead of master (or specify both at once!).
+
+Note: your fork on GitHub will contain code from all upstream branches in the state they were in when you pressed the "fork" button. You should delete any branches that you don't need.
+
+Delete a branch
+To delete a local branch:
+
+# will first check if the branch has been merged
+$ git branch -d [branch-name]
+# will delete the branch authoritatively
+$ git branch -D [branch-name]
+To delete a remote branch:
+
+$ git push origin --delete [branch-name]
+Apply a commit from another branch
+Use $ git cherry-pick [commit-SHA] to copy a commit from any branch and apply it on the current branch. If there are merge conflicts then you will be prompted to resolve them. Once this is done, add the files ($ git add [files]) and continue ($ git cherry-pick --continue). You can use $ git cherry-pick --abort to abandon an in-progress cherry-pick and return the repository to the state it was in before.
+
+Amend the last commit
+If you want to change the commit message for the last commit, you can do so with $ git commit --amend. If you made a mistake in the actual code, or if you forgot to add something, simply edit the code files to fix the mistake and then do:
+
+$ git add [files]
+$ git commit --amend
+While this updates the code and the commit message, it keeps the original commit author and timestamp and adds a new "committed-by: [you] [date+time]" field to the log. Consider passing these additional options to "$ git commit --amend":
+
+"--no-edit" - update the code but use the old commit message
+"--reset-author" - don't write a "committer" to the log, instead update the commit author and set the timestamp to the current time
+Amending a commit counts as editing history, so think twice before doing this if you have already shared you commit with other people (editing a PR is ok as long as the PR has not been merged).
+
+Squash your commits
+Once you made a pull request, you might be asked to squash your commits together. For example, you might have created several commits to fix a single issue or to develop a single feature and it doesn't make sense to keep all these commits in the MuseScore repository history. Instead, you need to combine these multiple small commits into one or more larger commits.
+
+The easy way to squash commits is via a "soft reset and recommit". For example, to squash the last 2 commits into a single commit:
+
+git reset --soft HEAD~2
+git commit -m "useful commit message"
+This removes the last two commits from the history, but keeps the code changes from those commits in the staging area so that they are immediately applied again in the new commit. You can edit the files before committing them (or afterwards with "$ commit --amend"), but you will need to add the files again using "$ git add" first.
+
+You can increase the number after "HEAD~" to squash more commits. If you've made lots of commits and you can't be bothered to count them, you can replace "HEAD~2" with the SHA of the last commit that you don't want to be squashed (use git log to view the commit SHAs).
+
+For the new commit message, you might want to include the old commit messages as a bullet list under a main summary message. You can use a simple "$ git commit" without "-m" to open a text editor to write a multi-line commit message, and you can even pre-populate the editor with the old commit messages by doing "git commit --edit -m"$(git log --format=%B --reverse HEAD..HEAD@{1})""
+
+If you need to do something more complicated than combining multiple commits into one then you need to perform an "interactive rebase". See editing history immediately below.
+
+Amending a commit counts as editing history, so think twice before doing this if you have already shared you commit with other people (editing a PR is ok as long as the PR has not been merged).
+
+Editing history (changing previous commits)
+Editing history is discouraged on the main repository because it creates problems for other developers when they try to merge in the changes. However, this doesn't apply to your fork (assuming it is only used by you) so you are welcome to edit your past commits as much as you like until they are merged into the main repository.
+
+Simple edits are best performed with "$ git commit --amend" (see amend the last commit) and "$ git reset --soft" (see squash your commits). Those methods allow you to edit a commit, and to combine multiple commits into one big commit (i.e. many-to-one) respectively, but they can only operate on the most recent commit(s). For anything else, you need to perform an interactive rebase.
+
+An interactive rebase allows you to do many things to past commits, even when there are later commits that you don't want to change, such as:
+
+reorder commits
+delete (drop) a past commits
+insert new commits before later commits
+squashing past commits (many-to-one)
+split commits (one-to-many)
+shuffle code changes between commits (many-to-many)
+To perform an interactive rebase, do:
+
+$ git rebase -i [commit-SHA]
+This will open an editor that displays a list of all the commits after the one specified (i.e. not including that one) and allows you to choose what you would like to do with each one. The most useful options are:
+
+pick - keep this commit unchanged
+edit - edit the commit (or insert new commits after it)
+drop - delete this commit and all its code changes
+squash - combine with previous "picked", edited or inserted commit
+When you save and close the editor, git rebase will following your "recipe" and replay the commits, skipping any marked "drop", pausing on any marked as "edit" to allow you to change them and/or add new commits, and prompting you to set a new message for any marked "squash". If any merge conflicts arise (e.g. due to your edits) then git rebase will pause on those commits too so that you can fix the conflicts. You can use $ git rebase --continue to resume after a pause, or $ git rebase --abort at any time to return the repository to the state it was in before you began the rebase.
+
+See this article to find out about two more handy options to git rebase: --fixup and --autosquash.
+
+Alternatives to interactive rebase
+Rebasing is a powerful tool, but it can be quite difficult to understand. When editing history, you might prefer to use the following workflow instead:
+
+$ git branch duplicate  # create a copy of the current branch, but stay on current branch
+$ git reset --hard   # delete all commits on current branch after the one specified
+Now you have moved "back in time" and are able to use the usual tools ($ git commit, $ git commit --amend, $ git reset --soft, etc) on older commits. Once done with the old commits you can cherry-pick the later commits (not necessarily in the same order as they were in before) from the duplicate branch.
+
+Of course, this is essentially doing manually what an interactive rebase would do for you automatically, but it can be easier to manage because you can decide what to do as you go along; you are not forced to come up with a complete plan at the outside as you are with an interactive rebase.
+
+Create and apply a patch
+It's better to contribute with a pull request than a patch but if you need to make a patch for any reason here is how. You have created a local branch with the following command, made some changes and commit locally one or more times.
+
+$ git checkout -b 404-new-feature
+To create a patch against the master branch, run
+
+$ git format-patch master --stdout &gt;  404-new-feature.patch
+To apply the resulting patch,
+
+# get stats about the patch without applying it
+$ git apply --stat 404-new-feature.patch
+# check if the patch can be applied without problem
+$ git apply --check 404-new-feature.patch
+# apply the patch
+$ git am --signoff &lt; 404-new-feature.patch 
+Test someone else's branch
+$ git checkout -b [branchname] master
+$ git pull git://github.com/[someoneelse]/MuseScore.git [branchname]
+If you test this person's code often you could add their repository as a remote:
+
+$ git remote add [other-person] https://github.com/[other-person]/MuseScore.git
+Now you can get their code like this:
+
+$ git fetch [other-person] [their-branch-name]
+$ git checkout [other-person]/[their-branch-name] # will go into "detached HEAD" state
+"Detached HEAD" simply means you are not on a branch. This is OK as long as you don't plan to make any changes to the other person's code.
+
+Work on someone else's branch
+Don't do this unless you have to. It's usually best to wait for the other person's PR to get merged into MuseScore's master branch before you try to build anything on top of it.
+
+If you do have to do this, follow the steps test their code (above) until you reach the detached HEAD state. Now do this:
+
+$ git checkout -b [your-branch-name] # create local branch
+# now make a change to the code
+$ git commit -m "really useful message" # commit the change
+# make more changes and commit them...
+Let's say you have added 3 commits on top of their code, but now they have made changes to their code and you want to update your code with their changes.
+
+$ git checkout [your-branch-name]
+$ git fetch [other-person] [their-branch-name]
+$ git rebase --onto [other-person]/[their-branch-name] HEAD~3
+This takes the last 3 commits in your branch and replays them on top of their branch. We have to give the number of commits in case the other person has edited history (used rebase, commit --amend or similar), otherwise git won't be able to tell where their code ends and your code begins (because their commit checksums will have changed).
+
+Fetch all PRs submitted to upstream
+If add this string to your MuseScore/.git/config under section [remote "upstream"]:
+
+fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
+
+Then whenever you fetch upstream, git will fetch all PRs submitted to musescore. Then you can easily checkout by PR number ####:
+
+$ git checkout upstream/pr/####
+Fix multiple issues in a single commit
+If a commit fixes multiple issues, then include each issue number in the commit message, e.g.:
+
+"fix #xxxxx, fix #yyyyy, fix #zzzz: message"
+so that the issue tracker will update each issue and set their status to fixed.
+
+Keep PR's artifacts on AppVeyor
+If you want someone to test the changes you made in the PR with the compiled package, you need to enable keeping artifacts on AppVeyor.
+
+AppVeyor won't keep the artifacts from every PR. It is done to optimise the storage usage AppVeyor granted us as an open source project.
+
+To keep the package in your PR, add "collect_artifacts" to the commit message title (not a commit message body).
+
+Example:
+
+fix #222222: crash on doing something + collect_artifacts
+Update data structures
+Optimise the code to prevent crash
+Run tests on personal Travis
+The MuseScore development infrastructure uses Travis Continuous Integration to run tests on every commit and PR submitted the upstream MuseScore repository, but now you can utilize Travis infrastructure for your own person GitHub branches.
+
+Go to https://travis-ci.org/ and create an account using your GitHub account
+Synchronize repositories with your GitHub (should import all your GitHub repos)
+Enable the GitHub->Travis build hook for MuseScore in https://travis-ci.org/profile/username by turning on the switch next to username/MuseScore
+Click the gear button (or go to https://travis-ci.org/username/MuseScore/settings) to configure following settings for this repo
+
+Enable Travis setting for "build pushes"
+
+Optional: add environment variable NOTIFICATION_EMAIL and set to your email address, if you want to get an email when the build completes
+Now whenever you push to your GitHub, it will trigger the .travis.yml script, and you can see the the status of the build at https://travis-ci.org/repositories. At this point, will just run tests, but if you would like to also produce a Linux AppImage, follow these next instructions to utilize Bintray:
+
+Upload AppImages to personal Bintray
+The above steps to run Travis builds actually also create a portable AppImage so you can test out your commits on (almost) any Linux machine. But are a few more things you need to configure in order for Travis to be able to upload the AppImages to Bintray.
+
+Complete the steps above to run tests on personal Travis
+Go to https://bintray.com and create an account using your GitHub account
+In https://bintray.com/username settings for repository, create a new "generic" repository named "MuseScoreDevelopment" (this is where the AppImages will be uploaded to)
+Go to https://bintray.com/profile/edit, click on API key
+Generate a Bintray API key and copy to clipboard
+Go to https://travis-ci.org/username/MuseScore/settings and add following environment variables:
+
+BINTRAY_API_KEY with value you paste from your clipboard
+
+BINTRAY_USER set to whatever your Bintray user name is (should be same as GitHub username if you created Travis and Bintray accounts from GitHub)
+APPIMAGE_UPLOAD_BRANCHES set to a list of branches (separated by spaces) that you want to upload builds for (or use the magical string "ALL" to upload builds from all branches).
+APPIMAGE_BUILD_ARCHS set to a list of CPU architectures, e.g "x86_64 i686 armhf" (enclosed in quotes), to build AppImages for.
+Now try adding a commit to one of the branches you listed in APPIMAGE_UPLOAD_BRANCHES, and wait ~20 minutes. If an AppImage isn't uploaded, look at the bottom of the logs your most recent Travis-ci build jobs for bintray.sh upload sub-jobs. These AppImages will be useful to share with anyone who you want to test our your new feature or bug fix! Please post the link as a comment to your PR, so other devs can easily try it out and provide feedback!
+
+Book traversal links for Git workflow
